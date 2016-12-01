@@ -34,7 +34,10 @@ int unpackPBBuffer(char *in, int inLen, int *playerId, short *code, Message **pm
 
     string stdMsg(buffer);
     Message *message = generateMessage((*code));
-    message->ParseFromString(stdMsg);
+    if(message) {
+        message->ParseFromString(stdMsg);
+        (*pmessage) = message;
+    }
     (*pmessage) = message;
     return offset;
 }

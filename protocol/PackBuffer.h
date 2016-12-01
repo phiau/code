@@ -45,6 +45,20 @@ char * packBuffer(int connMappingId, short code, const char *buffer, int bufferL
     return pack;
 }
 
+//功能：检查是不是头部，如果是头部，返回消息体长度，否则返回 -1
+int checkPkgHead(char *in, int inLen, int *connMappingId, short *code) {
+    if(NULL == in || HEADER_SIZE > inLen) return -1;
+    struct PackageHead *packageHead = (struct PackageHead *)in;
+    if(HEADER != packageHead->header) return -1;
+    if(connMappingId) {
+        (*connMappingId) = packageHead->connMappingId;
+    }
+    if(code) {
+        (*code) = packageHead->code;
+    }
+    return packageHead->len;
+}
+
 //功能：解包消息，对 in 按照规则进行解包
 //返回：返回已解析的长度，返回 0 说明长度不够，返回负数，说明错误异常
 int unpackBuffer(char *in, int inLen, int *connMappingId, short *code, char **buffer, int *bufferLen) {
