@@ -23,26 +23,18 @@ struct PackageHead {
 const static short HEADER_SIZE = 20;   //sizeof(header, len, checksum, code) + sizeof(connMappingId, empty1, empty2)
 const static short HEADER = 0x71ab;
 
-struct PackageProtocol {
-    PackageHead head;
-    char *body;
-};
-
-//功能：打包消息
-char * packBuffer(int connMappingId, short code, const char *buffer, int bufferLen, short *packLen) {
-    assert(sizeof(PackageHead) == HEADER_SIZE);
-    char *pack = (char *)malloc(HEADER_SIZE + bufferLen);
-    PackageProtocol *packageProtocol = (PackageProtocol *) pack;
-    //完成头部填充
-    packageProtocol->head.header = HEADER;
-    packageProtocol->head.len = bufferLen;
-    packageProtocol->head.checksum = 0;
-    packageProtocol->head.code = code;
-    packageProtocol->head.connMappingId = connMappingId;
-    //完成消息体填充
-    memcpy(pack + HEADER_SIZE, buffer, bufferLen);
-    (*packLen) = HEADER_SIZE + bufferLen;
-    return pack;
+//功能：构造包头部，然后发送消息的时候，把这个头部的内容复制到要发送的内容的前面，就可以了，其中 bufferLen 是要发送内容的长度
+//注意：在拷贝完 pHead 的内容后，要 free pHead
+short genPkgHead(int connMappingId, short code, int bufferLen, char **pHead) {
+    assert(sizeof(struct PackageHead) == HEADER_SIZE);
+    struct PackageHead * head = (struct PackageHead *) malloc(HEADER_SIZE);
+    head->header = HEADER;
+    head->len = bufferLen;
+    head->checksum = 0;
+    head->code = code;
+    head->connMappingId = connMappingId;
+    (*pHead) = (char *)(head);
+    return HEADER_SIZE;
 }
 
 //功能：检查是不是头部，如果是头部，返回消息体长度，否则返回 -1
@@ -57,34 +49,6 @@ int checkPkgHead(char *in, int inLen, int *connMappingId, short *code) {
         (*code) = packageHead->code;
     }
     return packageHead->len;
-}
-
-//功能：解包消息，对 in 按照规则进行解包
-//返回：返回已解析的长度，返回 0 说明长度不够，返回负数，说明错误异常
-int unpackBuffer(char *in, int inLen, int *connMappingId, short *code, char **buffer, int *bufferLen) {
-    if(NULL == in || HEADER_SIZE > inLen) return 0;
-    PackageHead *packageHead = (PackageHead *)in;
-    //不是数据包的头部标示，跳过
-    if(HEADER != packageHead->header) return 1;
-    //非我们约好的规则，解析错误
-    if(0 > packageHead->len) return -1;
-    //数据长度不够，等待继续接收
-    if(inLen - HEADER_SIZE < packageHead->len) return 0;
-    //todo 校验checksum
-
-    short len = packageHead->len;
-    //这里在重新申请空间的时候，要多申请一个自己，存放结束符，这样 Protocol Buffer 在序列化的时候，才正常
-    char *pack = (char *)malloc(HEADER_SIZE + len + 1);
-    memset(pack, 0, HEADER_SIZE + len + 1);
-    memcpy(pack, in, HEADER_SIZE + len);
-    PackageProtocol *packageProtocol = (PackageProtocol *)pack;
-    assert(len == packageProtocol->head.len);
-    (*connMappingId) = packageProtocol->head.connMappingId;
-    (*code) = packageProtocol->head.code;
-    (*bufferLen) = packageProtocol->head.len;
-    (*buffer) = pack + HEADER_SIZE;
-
-    return (HEADER_SIZE + len);
 }
 
 #endif //PROTOBUF_MASTER_PACKBUFFER_H
