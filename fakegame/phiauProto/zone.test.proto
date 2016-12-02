@@ -1,0 +1,8 @@
+syntax = "proto3";
+package zone.test;
+
+message Request {
+  int32 code = 1;
+  int32 count = 2;  //收到之后，加一，然后回复
+  int64 time = 3;  //时间
+}
