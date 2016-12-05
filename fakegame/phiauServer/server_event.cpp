@@ -32,17 +32,12 @@ echo_read_cb(struct bufferevent *bev, void *ctx)
     struct evbuffer *output = bufferevent_get_output(bev);
 
     Message *message = NULL;
-    int code = preParsePBPkg(input, message);
+    int code = preParsePBPkg(input, &message);
     if(0 > code) {
-        printf("-----------------error\n");
-        evbuffer_add_printf(output, "-----------no pkg\n");
+        evbuffer_add_printf(output, "client send content no pkg\n");
     } else {
         dispatch(code, message, output);
-        printf("-----------------success\n");
-        //evbuffer_add_printf(output, "-----------is pkg\n");
     }
-    /* Copy all the data from the input buffer to the output buffer. */
-    //evbuffer_add_buffer(output, input);
 }
 
 void

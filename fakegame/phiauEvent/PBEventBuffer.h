@@ -26,7 +26,7 @@ void prePackPBPkg(struct evbuffer *buf, int playerId, short code, Message *messa
 }
 
 //对缓冲进行解析
-int preParsePBPkg(struct evbuffer *buf, Message *message) {
+int preParsePBPkg(struct evbuffer *buf, Message **message) {
     int playerId;
     short code;
 
@@ -34,7 +34,7 @@ int preParsePBPkg(struct evbuffer *buf, Message *message) {
     int offset = 0xffff;
     size_t size;
     struct evbuffer_iovec v[1];
-    message = NULL;
+    (*message) = NULL;
     do {
         //确保缓冲前 HEADER_SIZE 字节在内存上是连续的
         if(!evbuffer_pullup(buf, HEADER_SIZE)) return -1;
@@ -68,9 +68,9 @@ int preParsePBPkg(struct evbuffer *buf, Message *message) {
         return -1;
     }
     std::string stdMsg(pkg + HEADER_SIZE);
-    message = generateMessage(code);
-    if(message) {
-        message->ParseFromString(stdMsg);
+    (*message) = generateMessage(code);
+    if((*message)) {
+        (*message)->ParseFromString(stdMsg);
         printf("success parse from string\n");
     } else {
         printf("the protocol code(%d) is incorrect\n", code);

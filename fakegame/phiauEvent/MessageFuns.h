@@ -8,7 +8,9 @@
 #include "PBMessageManager.h"
 
 #include "phiauComm/PTimeUtils.h"
+#include "phiauEvent/PBEventBuffer.h"
 #include "phiauProto/zone.test.pb.h"
+#include "phiauProto/lm.helloworld.pb.h"
 
 #include <stdio.h>
 #include <event2/buffer.h>
@@ -24,22 +26,33 @@ void testMessageFun(Message *psmsg, evbuffer* outBev) {
         int code = pmsg->code();
         int count = pmsg->count();
         long time = pmsg->time();
-        printf("--code=%d, count=%d, time=%ld\n", code, count, time);
+        printf("code = %d, count = %d, time = %ld\n", code, count, time);
 
         pmsg->set_count(count + 1);
         pmsg->set_time(p_now());
-        preParsePBPkg(outBev, (Message * )(pmsg));
+        prePackPBPkg(outBev, 101, 1, psmsg);
     } else {
-        printf("--\n");
+        printf("--testMessageFun NULL\n");
+    }
+}
+
+void testMessageFun2(Message *psmsg, evbuffer* outBev) {
+    lm::helloworld *pmsg = (lm::helloworld *) psmsg;
+    if (NULL != pmsg) {
+        printf("======testMessageFun2\n");
+    } else {
+        printf("--testMessageFun2 NULL\n");
     }
 }
 
 void initAllMessageMap() {
     addMessageMap(1, zone::test::Request::descriptor()->full_name());
+    addMessageMap(2, lm::helloworld::descriptor()->full_name());
 }
 
 void initAllMessageCallBack() {
     addMessageFunMap(1, testMessageFun);
+    addMessageFunMap(2, testMessageFun2);
 }
 
 #endif //LIBEVENT_MESSAGEFUNS_H
