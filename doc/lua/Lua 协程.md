@@ -42,7 +42,7 @@
 	
 		l1 = lua_newthread(L);
 	
-		if (0 != luaL_loadfile(l1, "./foo.lua"))
+		if (0 != luaL_loadfile(l1, "./foo.lua"))   // 第二个链接，这里是 luaL_dofile，然后就出现错误了
 		{
 			fprintf(stderr, "luaL_loadfile err: %s. \n", lua_tostring(l1, -1));
 			goto end;
